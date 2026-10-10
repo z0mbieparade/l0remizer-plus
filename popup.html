@@ -4,141 +4,416 @@
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Page Title</title>
+    <title>l0remizer+</title>
     <style>
+        /* Every pair here meets WCAG AA in both themes: 4.5:1 for text, 3:1
+           for control edges, the toggle knob and the focus ring. The dimmed
+           .is-active options are exempt because popup.js makes them inert. */
+        :root {
+            color-scheme: light dark;
+            --bg: #fff;
+            --text: #1a1a1a;
+            --help: #444;
+            --warning: #b03030;
+            --link: #0645ad;
+            --focus: #0067c0;
+            --btn-bg: #3b65b5;
+            --btn-bg-hover: #2f539a;
+            --btn-text: #fff;
+            --toggle-off: #767676;
+            --toggle-on: #2e7d4f;
+            --toggle-knob: #fff;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1e1e1e;
+                --text: #e8e8e8;
+                --help: #b8b8b8;
+                --warning: #ff8a80;
+                --link: #8ab4f8;
+                --focus: #6cb6ff;
+                --btn-bg: #8ab4f8;
+                --btn-bg-hover: #aecbfa;
+                --btn-text: #1e1e1e;
+                --toggle-off: #8a8a8a;
+                --toggle-on: #4caf7a;
+                --toggle-knob: #1e1e1e;
+            }
+        }
+        /* One type scale and one spacing unit for the whole popup. */
+        :root {
+            --font-size: 14px;
+            --font-size-small: 13px;
+            --space: 8px;
+        }
         body {
-                font-size: 20px;
-                min-width: 350px;
-                margin: 0;
-                padding: 20px;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            }
-            .option-wrap {
-                display: block;
-                margin-bottom: 20px;
-            }
-            .help {
-                color: #444;
-                font-size: 17px;
-            }
-            .help--warning {
-                color: indianred;
-            }
-            .btn {
-                background: cornflowerblue;
-                color: white;
-                border: 0;
-                border-radius: 3px;
-                padding: 10px 20px;
-                font-size: inherit;
-            }
-            .btn:hover,
-            .btn:hover {
-                background: #4672c1;
-            }
-            .deactivate-btn-wrap { display: none; }
-            .is-active .activate-btn-wrap { display: none; }
-            .is-active .deactivate-btn-wrap { display: block; }
-            .is-active .option-wrap {
-                pointer-events: none;
-                opacity: 0.6;
-                cursor: not-allowed;
-             }
+            background: var(--bg);
+            color: var(--text);
+            font-size: var(--font-size);
+            line-height: 1.4;
+            min-width: 440px;
+            margin: 0;
+            padding: calc(var(--space) * 1.5);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        p {
+            margin: 0;
+        }
+        .option-wrap {
+            display: block;
+            margin-bottom: calc(var(--space) * 1.5);
+        }
+        .help {
+            color: var(--help);
+            font-size: var(--font-size-small);
+            margin-top: calc(var(--space) / 4);
+        }
+        .help--warning {
+            color: var(--warning);
+        }
+        .btn {
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border: 0;
+            border-radius: 3px;
+            padding: var(--space) calc(var(--space) * 2);
+            font-size: inherit;
+        }
+        .btn:hover {
+            background: var(--btn-bg-hover);
+        }
+        .btn:focus-visible {
+            outline: 2px solid var(--focus);
+            outline-offset: 2px;
+        }
+        a {
+            color: var(--link);
+        }
+        .controls {
+            display: flex;
+            gap: var(--space);
+        }
+        .btn--icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: calc(var(--space) * 0.75);
+        }
+        .btn--icon svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        /* Two classes, so these beat .btn--icon's display. */
+        .controls .when-active { display: none; }
+        .is-active .controls .when-inactive { display: none; }
+        .is-active .controls .when-active { display: inline-flex; }
+        /* Keeps a name for screen readers on icon-only buttons. */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+        .is-active .option-wrap {
+            pointer-events: none;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        /* Roughly the bar's height, so a field reached with Tab is scrolled
+           clear of the bar instead of ending up hidden behind it. */
+        html {
+            scroll-padding-bottom: calc(var(--space) * 10);
+        }
+        /* Popups stop growing at about 600px tall and scroll after that, so
+           the controls stay pinned to the bottom of the visible popup. The
+           negative margins stretch the bar across the body's padding. */
+        .action-bar {
+            position: sticky;
+            bottom: 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--space) calc(var(--space) * 1.5);
+            margin: calc(var(--space) * 1.5) calc(var(--space) * -1.5) calc(var(--space) * -1.5);
+            padding: var(--space) calc(var(--space) * 1.5);
+            border-top: 1px solid var(--help);
+            background: var(--bg);
+        }
+        .action-bar #errorMessage {
+            flex-basis: 100%;
+            margin: 0;
+        }
 
-            p { margin-bottom: 0; }
-            input[type="checkbox"] { opacity: 0; position:absolute;}
-            .toggle {
-                float: right;
-                width: 48px;
-                border: 1px solid #aaa;
-                border-radius: 40px;
-                box-sizing: border-box;
-                padding: 3px;
-                background: #CCC;
-            }
-            .toggle:after {
-                content:'';
-                display:block;
-                width:20px;
-                height: 20px;
-                background-color: #fff;
-                border-radius: 50%;
-                transition: 0.3s ease;
-            }
-            input:focus ~ .toggle {
-                outline: 2px solid #00afff;
-                outline-offset: 1px;
-            }
-            input:checked ~ .toggle {
-                background:mediumseagreen;
-            }
-            input:checked ~ .toggle:after {
-                transform: translateX(100%);
-            }
-            .nested {
-                padding-left: 1rem;
-            }
-            input[type="range"] {
-width: calc(100% - 60px);
-            }
+        /* Two independent columns rather than one grid of shared rows: the
+           tall form-field warning would otherwise stretch its row and open a
+           gap between toggles in the other column. */
+        .toggle-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: start;
+            gap: var(--space);
+        }
+        .toggle-column {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--space) * 0.75);
+        }
+        /* A hostname is one long unbreakable word. */
+        .site-label {
+            overflow-wrap: anywhere;
+            margin-bottom: var(--space);
+        }
+        /* An invalid selector in the error text can be one long unbreakable
+           word. overflow-wrap lets it break, and min-width: 0 stops the
+           fieldset growing to fit it, as fieldsets otherwise do. */
+        .selector-group {
+            border: 0;
+            padding: 0;
+            margin: 0 0 calc(var(--space) * 1.5);
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+        .selector-group legend {
+            padding: 0;
+        }
+        /* minmax(0, 1fr) keeps the two columns equal and inside the popup. */
+        .selector-lists {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: var(--space);
+            align-items: start;
+        }
+
+        .toggle-option {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space);
+        }
+        .toggle-option .toggle {
+            flex: none;
+        }
+
+        input[type="checkbox"] { opacity: 0; position: absolute; }
+        /* Knob width plus padding and border fill half the track, so the
+           100% translate lands it flush right. */
+        .toggle {
+            display: block;
+            width: 40px;
+            border: 1px solid var(--toggle-off);
+            border-radius: 40px;
+            box-sizing: border-box;
+            padding: 3px;
+            background: var(--toggle-off);
+        }
+        .toggle:after {
+            content: '';
+            display: block;
+            width: 16px;
+            height: 16px;
+            background-color: var(--toggle-knob);
+            border-radius: 50%;
+            transition: 0.3s ease;
+        }
+        input:focus ~ .toggle {
+            outline: 2px solid var(--focus);
+            outline-offset: 1px;
+        }
+        input:checked ~ .toggle {
+            background: var(--toggle-on);
+            border-color: var(--toggle-on);
+        }
+        input:checked ~ .toggle:after {
+            transform: translateX(100%);
+        }
+
+        .range-wrap {
+            display: flex;
+            align-items: center;
+            gap: var(--space);
+        }
+        .range-wrap input {
+            flex: 1;
+            margin: 0;
+        }
+        /* Fixed to the widest value, "4.75x", so the slider does not resize
+           under the pointer when the value changes. */
+        #textLengthMultiplierValue {
+            width: 5ch;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .word-limits {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: calc(var(--space) / 2) calc(var(--space) * 2);
+            border: 0;
+            padding: 0;
+            min-width: 0;
+        }
+        .word-limits legend {
+            padding: 0;
+            margin-bottom: calc(var(--space) / 2);
+        }
+        .word-limits .help {
+            flex-basis: 100%;
+            margin: 0;
+        }
+        .word-limits input {
+            width: 6ch;
+            font: inherit;
+        }
+        textarea {
+            box-sizing: border-box;
+            width: 100%;
+            margin-top: calc(var(--space) / 2);
+            font: inherit;
+            font-size: var(--font-size-small);
+        }
+        textarea.code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
+        #gapFillFieldset {
+            margin: calc(var(--space) / 2) 0 0;
+            padding: calc(var(--space) / 2) var(--space);
+            font-size: var(--font-size-small);
+        }
+        /* :not([hidden]) because display: flex would otherwise override
+           the hidden attribute and show the options with no gaps to fill. */
+        #gapFillFieldset:not([hidden]) {
+            display: flex;
+            flex-wrap: wrap;
+            gap: calc(var(--space) / 2) calc(var(--space) * 1.5);
+        }
+        #gapFillFieldset .help {
+            flex-basis: 100%;
+            margin: 0;
+        }
         </style>
 </head>
 
 <body class="">
-    <label class="option-wrap">
-        Replace text
-        <input name="replaceText" type="checkbox" checked>
-        <div class="toggle"></div>
-    </label>
+    <p id="siteLabel" class="help site-label"></p>
+    <div class="option-wrap toggle-grid">
+        <div class="toggle-column">
+            <label class="toggle-option">
+                <input name="replaceText" type="checkbox" checked>
+                <span class="toggle"></span>
+                Replace text with lorem ipsum
+            </label>
+            <label class="toggle-option">
+                <input name="replaceTextWithScribble" type="checkbox">
+                <span class="toggle"></span>
+                Replace text with scribble
+            </label>
+            <label class="toggle-option">
+                <input name="replaceImage" type="checkbox" checked>
+                <span class="toggle"></span>
+                Replace images
+            </label>
+            <label class="toggle-option">
+                <input name="replaceBgImage" type="checkbox" checked>
+                <span class="toggle"></span>
+                Replace background images
+            </label>
+        </div>
+        <div class="toggle-column">
+            <label class="toggle-option">
+                <input name="replaceIframe" type="checkbox" checked>
+                <span class="toggle"></span>
+                Blur iframes
+            </label>
+            <label class="toggle-option">
+                <input name="replaceInput" type="checkbox" aria-describedby="replaceInputHelp">
+                <span class="toggle"></span>
+                Fill form fields
+            </label>
+            <div id="replaceInputHelp" class="help help--warning">Filling fields can trigger the
+                page's own scripts, such as autosave or search. Turn on only where that's safe.</div>
+        </div>
+    </div>
 
-    <label class="option-wrap nested">
-        Text length multiplier
-        <input id="textLengthMultiplierInput" name="textLengthMultiplier" data-setting type="range" value="1" min="0"
-            max="5" step="0.25">
-        <span id="textLengthMultiplierValue">1x</span>
-    </label>
+    <!-- Shown while anything uses the text replacer; see popup.js. -->
+    <div id="textSettings">
+        <label class="option-wrap range-wrap">
+            Replacement text length
+            <input id="textLengthMultiplierInput" name="textLengthMultiplier" data-setting type="range" value="1" min="0"
+                max="5" step="0.25">
+            <span id="textLengthMultiplierValue">1x</span>
+        </label>
+        <!-- Content outside these word counts keeps its length. -->
+        <fieldset class="option-wrap word-limits">
+            <legend>Only resize text with this many words</legend>
+            <label>At least <input id="minWordsInput" name="minWordsToResize" data-setting type="number" min="0"
+                    step="1" placeholder="Any" aria-describedby="wordLimitsError"></label>
+            <label>At most <input id="maxWordsInput" name="maxWordsToResize" data-setting type="number" min="0"
+                    step="1" placeholder="Any" aria-describedby="wordLimitsError"></label>
+            <p id="wordLimitsError" class="help help--warning" aria-live="polite"></p>
+        </fieldset>
 
-    <label class="option-wrap">
-        Replace text with scribble
-        <input name="replaceTextWithScribble" type="checkbox">
-        <div class="toggle"></div>
-    </label>
+        <div class="option-wrap">
+            <label for="customWordsInput">Custom replacement words</label>
+            <div id="customWordsHelp" class="help">Optional. Paste any text to use its words instead of lorem ipsum.</div>
+            <textarea id="customWordsInput" name="customWords" data-setting rows="2"
+                aria-describedby="customWordsHelp"></textarea>
+            <p id="gapMessage" class="help" aria-live="polite"></p>
+            <fieldset id="gapFillFieldset" hidden>
+                <legend>For those lengths</legend>
+                <label><input type="radio" name="gapFill" value="bend" checked> Bend your words to fit</label>
+                <label><input type="radio" name="gapFill" value="default"> Use the default lorem ipsum words</label>
+                <label><input type="radio" name="gapFill" value="closest"> Use the
+                    closest-length word</label>
+                <p id="gapExample" class="help" aria-live="polite"></p>
+            </fieldset>
+        </div>
+    </div>
 
-    <label class="option-wrap">
-        <input name="replaceImage" type="checkbox" checked>
-        Replace image
-        <div class="toggle"></div>
-    </label>
-    <label class="option-wrap">
-        <input name="replaceBgImage" type="checkbox" checked>
-        Replace backgroundimages
-        <div class="toggle"></div>
-    </label>
+    <fieldset class="option-wrap selector-group">
+        <legend>Elements to include or exclude</legend>
+        <div id="selectorListsHelp" class="help">Optional. One CSS selector per line, such as main or
+            .site-header. When Include has entries, only those parts change. Exclude parts never change.</div>
+        <div class="selector-lists">
+            <div>
+                <label for="onlySelectorsInput">Include</label>
+                <textarea id="onlySelectorsInput" class="code" name="onlySelectors" data-setting rows="2"
+                    spellcheck="false" aria-describedby="selectorListsHelp onlySelectorsError"></textarea>
+                <p id="onlySelectorsError" class="help help--warning" aria-live="polite"></p>
+            </div>
+            <div>
+                <label for="skipSelectorsInput">Exclude</label>
+                <textarea id="skipSelectorsInput" class="code" name="skipSelectors" data-setting rows="2"
+                    spellcheck="false" aria-describedby="selectorListsHelp skipSelectorsError"></textarea>
+                <p id="skipSelectorsError" class="help help--warning" aria-live="polite"></p>
+            </div>
+        </div>
+    </fieldset>
 
-    <label class="option-wrap">
-        <input name="replaceIframe" type="checkbox" checked>
-        Blur iframes
-        <div class="toggle"></div>
-    </label>
-
-    <label class="option-wrap">
-        Replace inputs
-        <input name="replaceInput" type="checkbox">
-        <div class="toggle"></div>
-        <div class="help help--warning">Replacing inputs might trigger unexpected changes on the page. Enable
-            carefully.</div>
-    </label>
-
-    <p class="activate-btn-wrap">
-        <button id="activateBtn" class="btn">Activate</button>
-    </p>
-    <p class="deactivate-btn-wrap">
-        <button id="deactivateBtn" class="btn">Deactivate</button>
-    </p>
-    <p>Like this extension? <a href="https://chrome.google.com/webstore/detail/loremizer/gahigmhdmjaopidlamnbdkipojfmolkf"
-            id="reviewLink" target="_blank">Please Review.</a></p>
-
-    <h3 style="display: inline-block;margin:0;">Loremizer </h3> v1.2
+    <div class="action-bar">
+        <p class="controls">
+            <button id="activateBtn" class="btn btn--icon when-inactive" title="Activate">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                <span class="visually-hidden">Activate</span>
+            </button>
+            <button id="deactivateBtn" class="btn btn--icon when-active" title="Deactivate">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+                <span class="visually-hidden">Deactivate</span>
+            </button>
+            <button id="rerollBtn" class="btn btn--icon when-active" title="New replacements">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path
+                        d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg>
+                <span class="visually-hidden">New replacements</span>
+            </button>
+        </p>
+        <p id="errorMessage" class="help help--warning" role="alert" hidden>
+            l0remizer+ can't run on this page. Browsers block extensions on their own pages and on extension stores.
+        </p>
+        <p class="help"><strong>l0remizer+</strong> <span id="versionLabel"></span> · Like this extension?
+            <a href="https://github.com/z0mbieparade/loremizer" target="_blank">See it on GitHub.</a></p>
+    </div>
+    <script src="lorem.js"></script>
     <script src="popup.js"></script>
 </body>
 

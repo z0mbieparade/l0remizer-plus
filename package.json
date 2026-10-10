@@ -1,0 +1,8 @@
+{
+  "name": "l0remizer-plus",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test"
+  }
+}
