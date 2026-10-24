@@ -2,3 +2,4 @@
 .devcontainer
 *.md 
 !README.md
+web-ext-artifacts
