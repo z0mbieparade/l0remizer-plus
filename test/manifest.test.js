@@ -20,9 +20,6 @@ test("popup.js's off-state title matches the manifest's default title", () => {
 test("each manifest icon is the size it is declared as", () => {
   const { icons } = JSON.parse(read("manifest.json"));
   for (const [size, file] of Object.entries(icons)) {
-    if (size === "16") {
-      continue; // Shares the 38px toolbar icon, which browsers scale down.
-    }
     const png = fs.readFileSync(path.join(__dirname, "..", file));
     // A PNG's width and height are big-endian at bytes 16 and 20.
     assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [+size, +size], file);

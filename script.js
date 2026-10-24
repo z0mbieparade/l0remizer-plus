@@ -72,7 +72,15 @@ window.loremiscous =
     function replaceImgs() {
       findElements("img").forEach(i => {
         const lastValue = i.src;
-        addOperation(() => (i.src = lastValue));
+        const lastPolicy = i.referrerPolicy;
+        addOperation(() => {
+          // Before src, so the original reloads under the page's own policy.
+          i.referrerPolicy = lastPolicy;
+          i.src = lastValue;
+        });
+        // Keeps the page's URL from reaching picsum.photos. CSS background
+        // images have no per-request policy, so replaceBgImgs can't do this.
+        i.referrerPolicy = "no-referrer";
         // Rendered size, else natural size; 0 for an image that never loaded.
         i.src = placeholderUrl(i.width, i.height);
       });

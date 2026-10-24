@@ -14,7 +14,7 @@ const vm = require("node:vm");
  */
 function loadPage() {
   const iframe = { style: { filter: "" } };
-  const img = { width: 300, height: 200, src: "original.png" };
+  const img = { width: 300, height: 200, src: "original.png", referrerPolicy: "" };
   const elements = { iframe: [iframe], img: [img] };
   const queue = new Map();
   let nextId = 1;
@@ -84,4 +84,15 @@ test("new replacements load a different placeholder image", () => {
   assert.notEqual(img.src, first);
   loremiscous();
   assert.equal(img.src, "original.png");
+});
+
+// The extension declares no data collection, so a placeholder request must
+// not tell picsum.photos which page the user is on.
+test("placeholder images send no referrer, and deactivating restores the policy", () => {
+  const { loremiscous, img, flush } = loadPage();
+  loremiscous({ replaceImage: true });
+  flush();
+  assert.equal(img.referrerPolicy, "no-referrer");
+  loremiscous();
+  assert.equal(img.referrerPolicy, "");
 });

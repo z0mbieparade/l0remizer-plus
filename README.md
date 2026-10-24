@@ -15,7 +15,7 @@ Say you want to take a screenshot of a web page, but it contains some sensitive 
 - 🎯 Choose which parts change: list CSS selectors, one per line, under **Include** (such as `main`) or **Exclude** (such as `.site-header`). Class names copied straight from the page work too, even Tailwind ones like `.md:flex`.
 - 💾 Every setting is remembered per site, as soon as you change it.
 - 🔁 Not keen on the words you got? While active, ↻ swaps in a fresh set of replacements without deactivating.
-- 🖼 Replace images
+- 🖼 Replace images with random photos from [picsum.photos](https://picsum.photos)
 - ⚡️ Fill forms
 - 〰 Convert text to scribble!
 
@@ -35,6 +35,12 @@ Run the tests with Node 20 or later:
 ```sh
 npm test
 ```
+
+## Privacy
+
+l0remizer+ collects no data. It stores your settings in your browser and sends them nowhere.
+
+**Small Warning:** Replace images loads photos from picsum.photos. That site sees your IP address, as it would for any image on the web. Replaced `<img>` tags send no referrer, so picsum.photos can't see which page you are on. Replaced CSS background images can't turn the referrer off. For those, picsum.photos may see the page's address. To send nothing, leave Replace images off.
 
 ## License
 
